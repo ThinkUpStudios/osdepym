@@ -22,7 +22,7 @@ controllers.controller('NavigationController', function ($ionicSideMenuDelegate,
 
   viewModel.hasBack = function(){
     if(navigationService.getCurrentView() == 'login'){
-      return contextoActual.getAfiliadoLogueado()!= undefined;
+      return contextoActual.getAfiliadoLogueado();
     } else return navigationService.getCurrentView() != 'home';
   };
 
@@ -70,6 +70,12 @@ controllers.controller('LoginController', function ($ionicLoading, $ionicPopup, 
 
     if(viewModel.genero === '') {
       errorHandler.handle('El género es requerido');
+
+      return;
+    }
+
+    if(contextoActual.getAfiliadoLogueado() && contextoActual.getAfiliadoLogueado().getDNI() === viewModel.dni) {
+      errorHandler.handle('El afiliado ya se encuentra logueado', 'Información');
 
       return;
     }
@@ -199,6 +205,12 @@ controllers.controller('NombreSearchController', function ($ionicLoading, naviga
   viewModel.nombre = '';
 
   viewModel.searchByNombre = function () {
+    if(viewModel.nombre === '') {
+      errorHandler.handle('Ingrese un nombre', 'Información');
+
+      return;
+    }
+
     $ionicLoading.show({
       content: 'Buscando Prestadores',
       showBackdrop: false
