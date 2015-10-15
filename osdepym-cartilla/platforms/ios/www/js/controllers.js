@@ -211,6 +211,12 @@ controllers.controller('NombreSearchController', function ($ionicLoading, naviga
       return;
     }
 
+    if(viewModel.nombre.length < 3) {
+      errorHandler.handle('El nombre debe superar los tres caracteres de longitud', 'Información');
+
+      return;
+    }
+
     $ionicLoading.show({
       content: 'Buscando Prestadores',
       showBackdrop: false

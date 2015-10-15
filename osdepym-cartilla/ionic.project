@@ -1,5 +1,5 @@
 {
-  "name": "osdepym-cartilla",
+  "name": "OSDEPYM",
   "app_id": "f50c70f2",
   "gulpStartupTasks": [
     "sass",
