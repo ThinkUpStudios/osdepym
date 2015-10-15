@@ -5,7 +5,7 @@ model.factory('contextoActual', function() {
   var prestadores = [];
   var prestadorActual = null;
   var tipoBusqueda = '';
-  var afiliadoLogueado = undefined;
+  var afiliadoLogueado;
   var coordenadasActuales = {};
 
   return {
