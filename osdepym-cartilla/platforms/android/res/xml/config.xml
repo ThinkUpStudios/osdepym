@@ -34,7 +34,7 @@
     <icon density="hdpi" src="resources\android\icon\drawable-hdpi-icon.png" />
     <icon density="xxhdpi" src="resources\android\icon\drawable-xxhdpi-icon.png" />
     <icon density="xxxhdpi" src="resources\android\icon\drawable-xxxhdpi-icon.png" />
-    <name>osdepym-cartilla</name>
+    <name>OSDEPYM</name>
     <description>
     </description>
     <author email="thinkup.studios@gmail.com" href="http://github.com/thinkup">
