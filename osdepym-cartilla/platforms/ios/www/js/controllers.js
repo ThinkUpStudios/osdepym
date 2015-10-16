@@ -1,6 +1,6 @@
 var controllers = angular.module('controllers', ['services', 'model', 'exceptions']);
 
-controllers.controller('NavigationController', function ($ionicSideMenuDelegate, $ionicLoading, $location, navigationService, actualizacionService, afiliadosService, errorHandler, contextoActual) {
+controllers.controller('NavigationController', function ($ionicSideMenuDelegate, $ionicLoading, navigationService, actualizacionService, afiliadosService, errorHandler, contextoActual) {
   var viewModel = this;
 
   viewModel.back = function () {
@@ -54,10 +54,10 @@ controllers.controller('NavigationController', function ($ionicSideMenuDelegate,
       .registrarLlamadoAsync()
       .then(function(registrado) {
           if(!registrado) {
-            errorHandler.handle('Error al registrar la llamada', 'Error', true);
+            errorHandler.handle('Error al registrar la llamada', 'Error', false);
           }
         }, function(error) {
-          errorHandler.handle(error, 'Error', true);
+          errorHandler.handle(error, 'Error', false);
         });
   };
 });
