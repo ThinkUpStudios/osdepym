@@ -25,7 +25,7 @@ cartilla.namespace('cartilla.exceptions.ServiceException');
 
 cartilla.exceptions.ServiceException = (function() {
   var message = '';
-  var innerException = {};
+  var innerException;
 
   var constructor = function(msg, inner) {
     if(!(this instanceof cartilla.exceptions.ServiceException)) {
@@ -53,10 +53,12 @@ var exceptions = angular.module('exceptions', []);
 
 exceptions.factory('errorHandler', function($log, $ionicPopup) {
   return {
-    handle: function(error, title) {
+    handle: function(error, title, showAlert) {
       if(!error || error == '') {
         return '';
       }
+
+      showAlert = showAlert === undefined || showAlert === null ? true : showAlert;
 
       var logMessage = '';
       var message = '';
@@ -89,10 +91,13 @@ exceptions.factory('errorHandler', function($log, $ionicPopup) {
       logMessage = title + ' - ' + logMessage;
 
       $log.error(logMessage);
-      $ionicPopup.alert({
-        title: title,
-        template: message
-      });
+
+      if(showAlert) {
+        $ionicPopup.alert({
+          title: title,
+          template: message
+        });
+      }
 
       return message;
     }

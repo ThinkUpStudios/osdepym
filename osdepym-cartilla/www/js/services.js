@@ -22,7 +22,7 @@ services.factory('navigationService', function($ionicHistory, $state, $timeout) 
   };
 });
 
-services.factory('afiliadosService', function($http, $q, dataProvider, configuration) {
+services.factory('afiliadosService', function($http, $httpParamSerializer, $q, geoService, dataProvider, configuration) {
   var async = $q;
 
   return {
@@ -69,6 +69,63 @@ services.factory('afiliadosService', function($http, $q, dataProvider, configura
     },
     getAfiliadoLogueadoAsync: function(){
       return dataProvider.getAfiliadoAsync();
+    },
+    registrarLlamadoAsync: function() {
+      var deferred = async.defer();
+
+      var postAsync = function(data, deferred) {
+        var postConfiguration = {
+         method: 'POST',
+         url: configuration.serviceUrls.registrarLlamado,
+         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+         data: $httpParamSerializer(data)
+        };
+
+        $http(postConfiguration)
+          .then(function(response) {
+            if(response.status >=200 && response.status < 300) {
+              deferred.resolve(true);
+            } else {
+              deferred.reject(new cartilla.exceptions.ServiceException('Error al registrar la llamada. Codigo: ' + response.status + ', Detalle: ' + response.statusText));
+            }
+          }, function(response) {
+            deferred.reject(new cartilla.exceptions.ServiceException('Error al registrar la llamada. Codigo: ' + response.status + ', Detalle: ' + response.statusText));
+          });
+      };
+
+      dataProvider
+        .getAfiliadoAsync()
+        .then(function (afiliado) {
+            if(!afiliado) {
+              deferred.reject(new cartilla.exceptions.ServiceException('No existe un afiliado logueado. No puede registrarse la llamada'));
+
+              return;
+            }
+
+            var postData = {
+              dni : afiliado.getDNI(),
+              nombre : afiliado.getNombre(),
+              cuil : afiliado.getCUIL(),
+              sexo : afiliado.getSexo(),
+              plan : afiliado.getPlan()
+            };
+
+            geoService
+              .getCoordenadasActualesAsync()
+              .then(function(coordenadas) {
+                  postData['latitud'] = coordenadas.position.coords.latitude;
+                  postData['longitud'] = coordenadas.position.coords.longitude;
+
+                  postAsync(postData, deferred);
+              }, function(error) {
+                postAsync(postData, deferred);
+              });
+          }, function (error) {
+            deferred.reject(new cartilla.exceptions.ServiceException('No pudo obtenerse el afiliado logueado. No puede registrarse la llamada', error));
+          }
+        );
+
+      return deferred.promise;
     }
   };
 });
@@ -246,7 +303,7 @@ services.factory('geoService', function($q, $cordovaGeolocation, contextoActual,
   var async = $q;
 
   return {
-    getCoordenadasActuales: function() {
+    getCoordenadasActualesAsync: function() {
       var deferred = async.defer();
       var horaActual = new Date();
 
@@ -307,7 +364,7 @@ services.factory('geoService', function($q, $cordovaGeolocation, contextoActual,
                     deferred.resolve(coordenadas);
                   }, function (err) {
                     $ionicLoading.hide();
-                    errorHandler.handle(err, "No se pudo obtener la ubicación actual");
+                    errorHandler.handle(new cartilla.exceptions.ServiceException('No se pudo obtener la ubicación actual', err), 'Error');
                   });
 
       }
