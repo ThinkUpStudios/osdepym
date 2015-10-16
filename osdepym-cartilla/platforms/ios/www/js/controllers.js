@@ -49,7 +49,7 @@ controllers.controller('NavigationController', function ($ionicSideMenuDelegate,
     }
   };
 
-  viewModel.llamarUrgenciasAsync = function() {
+  viewModel.registrarUrgenciaAsync = function() {
     afiliadosService
       .registrarLlamadoAsync()
       .then(function(registrado) {
