@@ -28,17 +28,17 @@ angular.module('cartilla', ['ionic', 'ngCordova', 'ngIOS9UIWebViewPatch', 'contr
 
       afiliadosService.getAfiliadoLogueadoAsync()
         .then(
-        function (afiliado) {
-          if (afiliado) {
-            contextoActual.setAfiliadoLogueado(afiliado);
-            navigationService.goTo('home');
-          } else {
+          function (afiliado) {
+            if (afiliado) {
+              contextoActual.setAfiliadoLogueado(afiliado);
+              navigationService.goTo('home');
+            } else {
+              navigationService.goTo('login');
+            }
+          }, function (error) {
             navigationService.goTo('login');
           }
-        }, function (error) {
-          navigationService.goTo('login');
-        }
-      );
+        );
     });
   })
   .config(function ($stateProvider, $urlRouterProvider, $ionicConfigProvider) {

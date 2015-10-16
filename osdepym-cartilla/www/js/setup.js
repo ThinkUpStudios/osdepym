@@ -10,7 +10,8 @@ setup.factory('configuration', function() {
     searchRadiumInMeters: 1000,
     serviceUrls: {
       getAfiliado: baseUrl.replace('<method>', 'getAfiliado?dni=<dni>&sexo=<sexo>'),
-      getPrestadores: baseUrl.replace('<method>', 'cartilla?dni=<dni>&sexo=<sexo>')
+      getPrestadores: baseUrl.replace('<method>', 'cartilla?dni=<dni>&sexo=<sexo>'),
+      registrarLlamado: baseUrl.replace('<method>', 'registrarLlamado')
     }
   };
 });

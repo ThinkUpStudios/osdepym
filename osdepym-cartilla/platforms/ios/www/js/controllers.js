@@ -1,6 +1,6 @@
 var controllers = angular.module('controllers', ['services', 'model', 'exceptions']);
 
-controllers.controller('NavigationController', function ($ionicSideMenuDelegate, $ionicLoading, navigationService, actualizacionService, errorHandler, contextoActual) {
+controllers.controller('NavigationController', function ($ionicSideMenuDelegate, $ionicLoading, $location, navigationService, actualizacionService, afiliadosService, errorHandler, contextoActual) {
   var viewModel = this;
 
   viewModel.back = function () {
@@ -43,10 +43,22 @@ controllers.controller('NavigationController', function ($ionicSideMenuDelegate,
           viewModel.cartillaActualizada = actualizada;
           $ionicLoading.hide();
         }, function (error) {
-          var message = errorHandler.handle(error);
+          errorHandler.handle(error, 'Error');
           $ionicLoading.hide();
         });
     }
+  };
+
+  viewModel.llamarUrgenciasAsync = function() {
+    afiliadosService
+      .registrarLlamadoAsync()
+      .then(function(registrado) {
+          if(!registrado) {
+            errorHandler.handle('Error al registrar la llamada', 'Error', true);
+          }
+        }, function(error) {
+          errorHandler.handle(error, 'Error', true);
+        });
   };
 });
 
@@ -63,13 +75,13 @@ controllers.controller('LoginController', function ($ionicLoading, $ionicPopup, 
 
   viewModel.login = function () {
     if(viewModel.dni === '') {
-      errorHandler.handle('El DNI es requerido');
+      errorHandler.handle('El DNI es requerido', 'Error');
 
       return;
     }
 
     if(viewModel.genero === '') {
-      errorHandler.handle('El género es requerido');
+      errorHandler.handle('El género es requerido', 'Error');
 
       return;
     }
@@ -101,15 +113,15 @@ controllers.controller('LoginController', function ($ionicLoading, $ionicPopup, 
               $ionicLoading.hide();
               goHome();
             }, function error(error) {
-              errorHandler.handle(error);
+              errorHandler.handle(error, 'Error');
               $ionicLoading.hide();
             })
         } else {
           $ionicLoading.hide();
-          errorHandler.handle("Ocurrió un error al loguear el afiliado");
+          errorHandler.handle("Ocurrió un error al loguear el afiliado", 'Error');
         }
       }, function (error) {
-        errorHandler.handle(error);
+        errorHandler.handle(error, 'Error');
         $ionicLoading.hide();
       });
   };
@@ -318,13 +330,6 @@ controllers.controller('DetallePrestadorController', function ($ionicLoading, $i
     }
 
     return "http://maps.google.com/maps?daddr=" + viewModel.getCoordenadasHasta();
-  };
-
-  viewModel.getCoordenadasDesde = function () {
-    var desde = "" + viewModel.contextoActual.getCoordenadasActuales().latitud + "," +
-      viewModel.contextoActual.getCoordenadasActuales().longitud + "";
-
-    return desde;
   };
 
   viewModel.getCoordenadasHasta = function () {
@@ -536,14 +541,14 @@ controllers.controller('MapCtrl', function ($scope, $ionicLoading, prestadoresSe
 
   function enableMap() {
     geoService
-      .getCoordenadasActuales()
+      .getCoordenadasActualesAsync()
       .then(function (coordenadas) {
         $scope.miPosicion = coordenadas.position;
         $scope.centerOnPos(coordenadas.position);
         $scope.updateMarkers($scope.radioBusqueda.value);
 
       }, function (err) {
-        errorHandler.handle(err);
+        errorHandler.handle(err, 'Error');
       });
   }
 
