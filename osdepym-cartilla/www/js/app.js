@@ -8,7 +8,7 @@ String.prototype.contains = function (it) {
 };
 
 angular.module('cartilla', ['ionic', 'ngCordova', 'ngIOS9UIWebViewPatch', 'controllers', 'cartilla.directives'])
-  .run(function ($cordovaSplashscreen, $ionicPlatform, navigationService, afiliadosService, dataProvider, contextoActual) {
+  .run(function ($cordovaSplashscreen, $ionicPlatform, navigationService, connectionService, geoService, afiliadosService, dataProvider, contextoActual) {
     $ionicPlatform.ready(function () {
       // Hide the accessory bar by default (remove this to show the accessory bar above the keyboard
       // for form inputs)
@@ -25,6 +25,17 @@ angular.module('cartilla', ['ionic', 'ngCordova', 'ngIOS9UIWebViewPatch', 'contr
       $ionicPlatform.registerBackButtonAction(function () {
         navigationService.goBack();
       }, 100);
+
+      if(connectionService.isOnline()) {
+        geoService.cargarMapa();
+      } else {
+        var onlineObserver = connectionService.getOnlineObserver();
+
+        onlineObserver.observe(function() {
+          onlineObserver.unobserve();
+          geoService.cargarMapa();
+        });
+      }
 
       afiliadosService.getAfiliadoLogueadoAsync()
         .then(

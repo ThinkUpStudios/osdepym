@@ -1,7 +1,5 @@
 var services = angular.module('services', ['setup', 'model', 'data']);
 
-//Creo este servicio por si tenemos que cambiar $state por $location o sacar $ionicHistory, para que
-//este encapsulada la navegación acá
 services.factory('navigationService', function($ionicHistory, $state, $timeout) {
   return {
     goTo: function(view, delay) {
@@ -20,6 +18,72 @@ services.factory('navigationService', function($ionicHistory, $state, $timeout) 
       return $state.current.name;
     }
   };
+});
+
+services.factory('connectionService', function($rootScope, $cordovaNetwork) {
+  return {
+    isOnline: function(){
+      if(ionic.Platform.isWebView()) {
+        return $cordovaNetwork.isOnline();
+      } else {
+        return navigator.onLine;
+      }
+    },
+    getOnlineObserver: function() {
+      var observer;
+
+      return {
+        observe: function(onlineCallback) {
+          observer = onlineCallback;
+
+          if(ionic.Platform.isWebView()){
+            $rootScope.$on('$cordovaNetwork:online', function(event, networkState) {
+              if(observer) {
+                observer();
+              }
+            });
+          }
+          else {
+            window.addEventListener("online", function(e) {
+              if(observer) {
+                observer();
+              }
+            }, false);
+          }
+        },
+        unobserve: function() {
+          observer = undefined;
+        }
+      };
+    },
+    getOfflineObserver: function() {
+      var observer;
+
+      return {
+        observe: function(offlineCallback) {
+          observer = offlineCallback;
+
+          if(ionic.Platform.isWebView()){
+             $rootScope.$on('$cordovaNetwork:offline', function(event, networkState) {
+                if(observer) {
+                  observer();
+                }
+             });
+          }
+          else {
+           window.addEventListener("offline", function(e) {
+             if(observer) {
+               observer();
+             }
+           }, false);
+          }
+        },
+        unobserve: function() {
+          observer = undefined;
+        }
+      };
+    }
+  }
 });
 
 services.factory('afiliadosService', function($http, $httpParamSerializer, $q, geoService, dataProvider, configuration) {
@@ -303,75 +367,89 @@ services.factory('geoService', function($q, $cordovaGeolocation, contextoActual,
   var async = $q;
 
   return {
+    cargarMapa: function() {
+      var script = document.createElement("script");
+
+      script.type = 'text/javascript';
+      script.id = 'googleMaps';
+      script.src = 'http://maps.google.com/maps/api/js?key=AIzaSyD_7ohmG9gDaQNX2vJ5D5ZsVjHv0Jfr2us&sensor=true';
+
+      document.body.appendChild(script);
+    },
     getCoordenadasActualesAsync: function() {
       var deferred = async.defer();
       var horaActual = new Date();
 
       if(contextoActual.getCoordenadasActuales() && contextoActual.getCoordenadasActuales().horaTomada){
         var dif = (Math.abs(horaActual.getTime() - contextoActual.getCoordenadasActuales().horaTomada.getTime()))/1000;
+
         if(dif < 120){
           var posOptions = {timeout: 30000, enableHighAccuracy: false};
-          $cordovaGeolocation
-                    .getCurrentPosition(posOptions)
-                    .then(function (position) {
-                      var coordenadas = {
-                        position: position,
-                        horaTomada: new Date()
-                      };
-                      contextoActual.setCoordenadasActuales(coordenadas);
-                    }, function (err) {
 
-                    });
+          $cordovaGeolocation
+            .getCurrentPosition(posOptions)
+            .then(function (position) {
+              var coordenadas = {
+                position: position,
+                horaTomada: new Date()
+              };
+              contextoActual.setCoordenadasActuales(coordenadas);
+            }, function (err) {
+
+            });
+
           deferred.resolve(contextoActual.getCoordenadasActuales());
         }
         else{
           $ionicLoading.show({
-                      content: 'Getting current location...',
-                      showBackdrop: false
-                    });
+            content: 'Obteniendo ubicación actual...',
+            showBackdrop: false
+          });
+
           var posOptions = {timeout: 5000, enableHighAccuracy: false};
+
           $cordovaGeolocation
-                    .getCurrentPosition(posOptions)
-                    .then(function (position) {
-                      var coordenadas = {
-                        position: position,
-                        horaTomada: new Date()
-                      };
-                      contextoActual.setCoordenadasActuales(coordenadas);
-                      $ionicLoading.hide();
-                      deferred.resolve(coordenadas);
-                    }, function (err) {
-                      $ionicLoading.hide();
-                      deferred.resolve(contextoActual.getCoordenadasActuales());
-                    });
+            .getCurrentPosition(posOptions)
+            .then(function (position) {
+              var coordenadas = {
+                position: position,
+                horaTomada: new Date()
+              };
+
+              contextoActual.setCoordenadasActuales(coordenadas);
+              $ionicLoading.hide();
+              deferred.resolve(coordenadas);
+            }, function (err) {
+              $ionicLoading.hide();
+              deferred.resolve(contextoActual.getCoordenadasActuales());
+            });
         }
       }
       else{
         $ionicLoading.show({
-                  content: 'Getting current location...',
-                  showBackdrop: false
-                });
+          content: 'Obteniendo ubicación actual...',
+          showBackdrop: false
+        });
+
         var posOptions = {timeout: 20000, enableHighAccuracy: false};
+
         $cordovaGeolocation
-                  .getCurrentPosition(posOptions)
-                  .then(function (position) {
-                    var coordenadas = {
-                      position: position,
-                      horaTomada: new Date()
-                    };
-                    contextoActual.setCoordenadasActuales(coordenadas);
-                    $ionicLoading.hide();
-                    deferred.resolve(coordenadas);
-                  }, function (err) {
-                    $ionicLoading.hide();
-                    errorHandler.handle(new cartilla.exceptions.ServiceException('No se pudo obtener la ubicación actual', err), 'Error');
-                  });
-
+          .getCurrentPosition(posOptions)
+          .then(function (position) {
+            var coordenadas = {
+              position: position,
+              horaTomada: new Date()
+            };
+            contextoActual.setCoordenadasActuales(coordenadas);
+            $ionicLoading.hide();
+            deferred.resolve(coordenadas);
+          }, function (err) {
+            $ionicLoading.hide();
+            errorHandler.handle(new cartilla.exceptions.ServiceException('No se pudo obtener la ubicación actual', err), 'Error');
+          });
       }
-
 
       return deferred.promise;
     }
-
   };
 });

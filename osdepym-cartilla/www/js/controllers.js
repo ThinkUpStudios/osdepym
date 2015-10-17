@@ -1,6 +1,6 @@
 var controllers = angular.module('controllers', ['services', 'model', 'exceptions']);
 
-controllers.controller('NavigationController', function ($ionicSideMenuDelegate, $ionicLoading, navigationService, actualizacionService, afiliadosService, errorHandler, contextoActual) {
+controllers.controller('NavigationController', function ($ionicSideMenuDelegate, $ionicLoading, navigationService, connectionService, actualizacionService, afiliadosService, errorHandler, contextoActual) {
   var viewModel = this;
 
   viewModel.back = function () {
@@ -32,24 +32,35 @@ controllers.controller('NavigationController', function ($ionicSideMenuDelegate,
 
   viewModel.actualizar = function () {
     $ionicSideMenuDelegate.toggleRight();
-    $ionicLoading.show({
-      noBackdrop: true,
-      template: '<p class="item-icon-left">Actualizando Cartilla...<ion-spinner icon="lines"/></p>'
-    });
 
     if (contextoActual.getAfiliadoLogueado()) {
-      actualizacionService.actualizarCartillaAsync(contextoActual.getAfiliadoLogueado().getDNI(), contextoActual.getAfiliadoLogueado().getSexo())
-        .then(function (actualizada) {
-          viewModel.cartillaActualizada = actualizada;
-          $ionicLoading.hide();
-        }, function (error) {
-          errorHandler.handle(error, 'Error');
-          $ionicLoading.hide();
+      if(connectionService.isOnline()) {
+        $ionicLoading.show({
+          noBackdrop: true,
+          template: '<p class="item-icon-left">Actualizando Cartilla...<ion-spinner icon="lines"/></p>'
         });
+
+        actualizacionService
+          .actualizarCartillaAsync(contextoActual.getAfiliadoLogueado().getDNI(), contextoActual.getAfiliadoLogueado().getSexo())
+          .then(function (actualizada) {
+            viewModel.cartillaActualizada = actualizada;
+
+            $ionicLoading.hide();
+          }, function (error) {
+            errorHandler.handle(error, 'Error');
+            $ionicLoading.hide();
+          });
+      } else {
+        errorHandler.handle('No se puede actualizar la cartilla por problemas de conectividad. Intente más tarde', 'Error');
+      }
     }
   };
 
   viewModel.registrarUrgenciaAsync = function() {
+    if(!connectionService.isOnline()) {
+      return;
+    }
+
     afiliadosService
       .registrarLlamadoAsync()
       .then(function(registrado) {
@@ -62,7 +73,7 @@ controllers.controller('NavigationController', function ($ionicSideMenuDelegate,
   };
 });
 
-controllers.controller('LoginController', function ($ionicLoading, $ionicPopup, navigationService, actualizacionService, afiliadosService, dataProvider, errorHandler, contextoActual) {
+controllers.controller('LoginController', function ($ionicLoading, $ionicPopup, navigationService, connectionService, actualizacionService, afiliadosService, dataProvider, errorHandler, contextoActual) {
   var viewModel = this;
 
   var goHome = function () {
@@ -92,6 +103,12 @@ controllers.controller('LoginController', function ($ionicLoading, $ionicPopup, 
       return;
     }
 
+    if(!connectionService.isOnline()) {
+      errorHandler.handle('Se detectaron problemas de conectividad. No se puede autenticar al afiliado', 'Error');
+
+      return;
+    }
+
     $ionicLoading.show({
       noBackdrop: true,
       template: '<p class="item-icon-left">Buscando Afiliado...<ion-spinner icon="lines"/></p>'
@@ -103,19 +120,26 @@ controllers.controller('LoginController', function ($ionicLoading, $ionicPopup, 
         $ionicLoading.hide();
 
         if (afiliadoLogueado) {
-          $ionicLoading.show({
-            noBackdrop: true,
-            template: '<p class="item-icon-left">Descargando Cartilla...<ion-spinner icon="lines"/></p>'
-          });
           contextoActual.setAfiliadoLogueado(afiliadoLogueado);
-          actualizacionService.actualizarCartillaAsync(afiliadoLogueado.getDNI(), afiliadoLogueado.getSexo())
-            .then(function success() {
-              $ionicLoading.hide();
-              goHome();
-            }, function error(error) {
-              errorHandler.handle(error, 'Error');
-              $ionicLoading.hide();
-            })
+
+          if(connectionService.isOnline()) {
+            $ionicLoading.show({
+              noBackdrop: true,
+              template: '<p class="item-icon-left">Descargando Cartilla...<ion-spinner icon="lines"/></p>'
+            });
+
+            actualizacionService.actualizarCartillaAsync(afiliadoLogueado.getDNI(), afiliadoLogueado.getSexo())
+              .then(function success() {
+                $ionicLoading.hide();
+                goHome();
+              }, function error(error) {
+                errorHandler.handle(error, 'Error');
+                $ionicLoading.hide();
+              });
+          } else {
+            errorHandler.handle('No se puede descargar la cartilla por problemas de conectividad. Intente descargarla manualmente más tarde.', 'Error');
+            goHome();
+          }
         } else {
           $ionicLoading.hide();
           errorHandler.handle("Ocurrió un error al loguear el afiliado", 'Error');
@@ -289,7 +313,7 @@ controllers.controller('ResultadoBusquedaController', function (navigationServic
   };
 });
 
-controllers.controller('DetallePrestadorController', function ($ionicLoading, $ionicPopup, contextoActual) {
+controllers.controller('DetallePrestadorController', function ($ionicLoading, $ionicPopup, navigationService, connectionService, contextoActual) {
   var viewModel = this;
 
   viewModel.contextoActual = contextoActual;
