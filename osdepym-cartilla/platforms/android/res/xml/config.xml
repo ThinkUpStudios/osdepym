@@ -59,4 +59,7 @@
     <icon density="xhdpi" src="resources\android\icon\drawable-xhdpi-icon.png" />
     <splash src="resources\splash.png" />
     <allow-navigation href="http://www.osdepym.com.ar:8080/OSDEPYM_CartillaWeb2/rest/mobile/*" />
+    <feature name="NetworkStatus">
+        <param name="android-package" value="org.apache.cordova.networkinformation.NetworkManager" />
+    </feature>
 </widget>
