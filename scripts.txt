@@ -10,6 +10,7 @@ cordova plugin add cordova-sqlite-storage
 cordova plugin add cordova-plugin-geolocation
 cordova plugin add ionic-plugin-keyboard
 cordova plugin add cordova-plugin-statusbar
+cordova plugin add cordova-plugin-network-information
 
 *** Node Modules ***
 npm install -g gulp
